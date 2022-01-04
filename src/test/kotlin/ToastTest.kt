@@ -1,26 +1,27 @@
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 
 private val THREADS = Runtime.getRuntime().availableProcessors()
 private const val SCALE = 100
-private const val PRECISIONING_STEPS = 50_000
+private const val PRECISIONING_STEPS = 10_000
 private val MATH_CONTEXT = MathContext.UNLIMITED
 
 class ToastTest {
-    private val BLOCK_COUNT = THREADS * 2
+    private val BLOCK_COUNT = THREADS * 100
     private val BLOCK_SIZE = PRECISIONING_STEPS / BLOCK_COUNT
+
 
     @Test
 //    @Timeout(30, unit = TimeUnit.SECONDS)
     fun `Create some CPU load`() {
         // Preparation
+        val processedSteps = AtomicInteger(0)
+
         val startTime = System.currentTimeMillis()
 
         // Execution
@@ -41,6 +42,10 @@ class ToastTest {
                                                     (1 / (8.bd() * it + 5)) -
                                                     (1 / (8.bd() * it + 6)))
                                 }.sum()
+                                .also {
+                                    printProgress(processedSteps)
+                                }
+
                         }
                     }
                     .awaitAll()
@@ -50,6 +55,16 @@ class ToastTest {
         }
 
         // Assertion
+    }
+
+    private fun CoroutineScope.printProgress(processedSteps: AtomicInteger) {
+        async(Dispatchers.Default) {
+            println(
+                "Progress: %6.2f%%".format(
+                    processedSteps.incrementAndGet() * 100 / BLOCK_COUNT.toDouble()
+                )
+            )
+        }
     }
 }
 
