@@ -7,7 +7,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
 private val THREADS = Runtime.getRuntime().availableProcessors()
-private const val SCALE = 100
+private const val SCALE = 2500
 private const val PRECISIONING_STEPS = 10_000
 private val MATH_CONTEXT = MathContext.UNLIMITED
 
@@ -49,6 +49,7 @@ class ToastTest {
                         }
                     }
                     .awaitAll()
+                    .also { println("Bringing it all togehter") }
                     .sum()
             )
             println("Took ${(System.currentTimeMillis() - startTime).toDouble() / 1000} Seconds")
