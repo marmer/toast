@@ -37,10 +37,10 @@ class ToastTest {
                                 .map {
                                     //Bailey–Borwein–Plouffe formula .. https://en.wikipedia.org/wiki/Bailey%E2%80%93Borwein%E2%80%93Plouffe_formula
                                     (1 / 16.pow(it)) * (
-                                            (4 / (8.bd() * it + 1)) -
-                                                    (2 / (8.bd() * it + 4)) -
-                                                    (1 / (8.bd() * it + 5)) -
-                                                    (1 / (8.bd() * it + 6)))
+                                            (4.bd() / (8L * it + 1)) -
+                                                    (2.bd() / (8L * it + 4)) -
+                                                    (1.bd() / (8L * it + 5)) -
+                                                    (1.bd() / (8L * it + 6)))
                                 }.sum()
                                 .also {
                                     printProgress(processedSteps)
@@ -80,8 +80,10 @@ private fun Int.pow(p: Int): BigDecimal = bd().pow(p)
 private operator fun BigDecimal.times(factor: Int): BigDecimal = multiply(factor.bd(), MATH_CONTEXT)
 private operator fun BigDecimal.plus(addend: Int): BigDecimal = plus(addend.bd())
 private operator fun BigDecimal.div(addend: Int): BigDecimal = divide(addend.bd(), RoundingMode.UP)
+private operator fun BigDecimal.div(addend: Long): BigDecimal = divide(addend.bd(), RoundingMode.UP)
 
 
 private fun Int.bd(): BigDecimal = toBigDecimal().setScale(SCALE)
+private fun Long.bd(): BigDecimal = toBigDecimal().setScale(SCALE)
 
 private fun List<BigDecimal>.sum() = reduce { a, b -> a.plus(b) }
