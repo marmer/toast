@@ -8,16 +8,20 @@ import java.math.MathContext
 import java.math.RoundingMode
 import java.util.concurrent.Executors
 
-class ToastTest {
-    private val THREADS = 16
-    private val blockSize = 1000
-    private val blockCount = 1000
+private val THREADS = Runtime.getRuntime().availableProcessors()
+private const val SCALE = 100
+private const val PRECISIONING_STEPS = 50_000
+private val MATH_CONTEXT = MathContext.UNLIMITED
 
+class ToastTest {
+    private val BLOCK_COUNT = THREADS * 2
+    private val BLOCK_SIZE = PRECISIONING_STEPS / BLOCK_COUNT
 
     @Test
 //    @Timeout(30, unit = TimeUnit.SECONDS)
     fun `Create some CPU load`() {
         // Preparation
+        val startTime = System.currentTimeMillis()
 
         // Execution
         println("Calculating PI")
@@ -25,45 +29,43 @@ class ToastTest {
             val dispatcher = Executors.newFixedThreadPool(THREADS).asCoroutineDispatcher()
 
             println(
-                "PI: " + (0 until blockCount)
+                "PI: " + (0 until BLOCK_COUNT)
                     .map { block ->
                         async(dispatcher) {
-                            (block * blockSize until block * blockSize + blockSize)
+                            (block * BLOCK_SIZE until block * BLOCK_SIZE + BLOCK_SIZE)
                                 .map {
                                     //Bailey–Borwein–Plouffe formula .. https://en.wikipedia.org/wiki/Bailey%E2%80%93Borwein%E2%80%93Plouffe_formula
-                                    1 / 16.pow(it) * (
-                                            (4/(8.0*it+1))-
-                                            (2/(8.0*it+4))-
-                                            (1/(8.0*it+5))-
-                                            (1/(8.0*it+6))
-                                            )
+                                    (1 / 16.pow(it)) * (
+                                            (4 / (8.bd() * it + 1)) -
+                                                    (2 / (8.bd() * it + 4)) -
+                                                    (1 / (8.bd() * it + 5)) -
+                                                    (1 / (8.bd() * it + 6)))
                                 }.sum()
                         }
                     }
                     .awaitAll()
                     .sum()
             )
-
+            println("Took ${(System.currentTimeMillis() - startTime).toDouble() / 1000} Seconds")
         }
 
         // Assertion
     }
-
 }
 
-
-private val MATH_CONTEXT = MathContext.DECIMAL128
 
 private operator fun Int.div(divisor: BigDecimal): BigDecimal =
     bd().divide(divisor, RoundingMode.UP)
 
 private operator fun Int.times(factor: BigDecimal): BigDecimal = bd().multiply(factor, MATH_CONTEXT)
-//private fun Int.pow(p: Int): BigDecimal = bd().pow(p)
-private fun Int.pow(p: Int): Double = Math.pow(toDouble(), p.toDouble())
+
+private fun Int.pow(p: Int): BigDecimal = bd().pow(p)
 
 private operator fun BigDecimal.times(factor: Int): BigDecimal = multiply(factor.bd(), MATH_CONTEXT)
 private operator fun BigDecimal.plus(addend: Int): BigDecimal = plus(addend.bd())
+private operator fun BigDecimal.div(addend: Int): BigDecimal = divide(addend.bd(), RoundingMode.UP)
 
-private fun Int.bd() = toBigDecimal(MATH_CONTEXT)
+
+private fun Int.bd(): BigDecimal = toBigDecimal().setScale(SCALE)
 
 private fun List<BigDecimal>.sum() = reduce { a, b -> a.plus(b) }
