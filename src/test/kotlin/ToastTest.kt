@@ -6,7 +6,8 @@ import java.math.RoundingMode
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
-private val THREADS = Runtime.getRuntime().availableProcessors()
+private val THREADS = (Runtime.getRuntime().availableProcessors() * 1.0).toInt()
+
 private const val SCALE = 2500
 private const val PRECISIONING_STEPS = 10_000
 private val MATH_CONTEXT = MathContext.UNLIMITED
